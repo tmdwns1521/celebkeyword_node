@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
 } from '@nestjs/common';
 import { PlaceService } from './place.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -18,7 +17,7 @@ export class PlaceController {
   constructor(private readonly placeService: PlaceService) {}
 
   @Post('/place-rank')
-  getPlaceRanking(@Body() placeRankDto: PlaceRankDto): Promise<number> {
+  getPlaceRanking(@Body() placeRankDto: PlaceRankDto): Promise<any> {
     return this.placeService.getPlaceRanking(placeRankDto);
   }
 
