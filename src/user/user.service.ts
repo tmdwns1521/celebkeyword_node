@@ -38,17 +38,22 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
+  async isUserIdTaken(userId: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { userId } });
+    return !!user;
+  }
+
   async login(loginUserDto: LoginUserDto): Promise<string> {
     const { userId, password } = loginUserDto;
 
     const user = await this.userRepository.findOne({ where: { userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UnauthorizedException('유저 없음');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('비밀번호 틀림');
     }
 
     const payload = { userId: user.userId, sub: user.id }; // JWT Payload 설정
