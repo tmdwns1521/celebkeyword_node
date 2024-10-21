@@ -1,30 +1,25 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true, length: 30 })
-  userId: string;
-
-  @Column({ length: 20 })
+  @Column()
   username: string;
 
-  @Column({ length: 100 })
+  @Column()
   password: string;
 
-  @Column({ unique: true, length: 30 })
+  @Column({ type: 'varchar', length: 191, unique: true })
   email: string;
 
-  @Column({ unique: true, length: 20 })
+  @Column()
   phoneNumber: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  createdDate: Date;
+  @Column({ default: false })
+  isEmailVerified: boolean; // 이메일 인증 여부 필드
+
+  @Column({ nullable: true })
+  emailVerificationToken: string; // 이메일 인증 토큰 필드
 }
