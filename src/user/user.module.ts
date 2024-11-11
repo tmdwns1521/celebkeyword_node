@@ -12,7 +12,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     forwardRef(() => AuthModule),
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.example.com', // SMTP 서버
+        host: 'smtp.naver.com', // SMTP 서버
         port: 587,
         secure: false,
         auth: {
@@ -21,7 +21,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         },
       },
       defaults: {
-        from: '"No Reply" <no-reply@example.com>', // 기본 발신자 설정
+        from: '<celkey@naver.com>', // 기본 발신자 설정
       },
     }),
   ],

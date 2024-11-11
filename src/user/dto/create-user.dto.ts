@@ -3,6 +3,10 @@ import { IsString, IsNotEmpty } from 'class-validator';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
+  id: string;
+
+  @IsString()
+  @IsNotEmpty()
   username: string;
 
   @IsString()
@@ -14,6 +18,5 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
-  @IsNotEmpty()
   phoneNumber: string;
 }
