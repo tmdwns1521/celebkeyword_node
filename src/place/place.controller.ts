@@ -6,18 +6,27 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { PlaceService } from './place.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceRankDto } from './dto/place-rank.dto';
+import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@Controller('place')
+@Controller('places')
 export class PlaceController {
   constructor(private readonly placeService: PlaceService) {}
 
-  @Post('/place-rank')
-  getPlaceRanking(@Body() placeRankDto: PlaceRankDto): Promise<any> {
+  @Post('/place-rank/single')
+  @UseGuards(JwtAuthGuard) // Apply the JwtAuthGuard to protect this route
+  async getPlaceRanking(
+    @Body() placeRankDto: PlaceRankDto,
+    @Req() req: Request, // Access the request object
+  ): Promise<any> {
+    const user = req.user; // Access the authenticated user from the request
     return this.placeService.getPlaceRanking(placeRankDto);
   }
 

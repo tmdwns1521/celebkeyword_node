@@ -29,7 +29,6 @@ export class PlaceService {
         return 'place';
       }
     } else {
-      console.log('No match found for __APOLLO_STATE__');
       return 'place';
       // await new Promise((resolve) => setTimeout(resolve, 5000));
     }
@@ -244,7 +243,6 @@ export class PlaceService {
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
     };
     const type = await this.getPlaceType(keyword);
-    console.log(type);
 
     let rank = -1;
     let totalReviewCount = 0;
@@ -265,7 +263,6 @@ export class PlaceService {
         const placeInfo = response.find((item) => item.id === placeNumber);
         if (rank !== -1) {
           rank = page + rank;
-          console.log(placeInfo);
           totalReviewCount = placeInfo.totalReviewCount;
           visitorReviewCount = placeInfo.visitorReviewCount;
           return { rank, totalReviewCount, visitorReviewCount };
