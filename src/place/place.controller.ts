@@ -15,6 +15,7 @@ import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceRankDto } from './dto/place-rank.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { User } from "../user/entities/user.entity";
 
 @Controller('places')
 export class PlaceController {
@@ -26,8 +27,10 @@ export class PlaceController {
     @Body() placeRankDto: PlaceRankDto,
     @Req() req: Request, // Access the request object
   ): Promise<any> {
-    const user = req.user; // Access the authenticated user from the request
-    return this.placeService.getPlaceRanking(placeRankDto);
+    const user = req.user as User;
+    const result = await this.placeService.getPlaceRanking(placeRankDto);
+    await this.placeService.setSingleRank(user, placeRankDto, result);
+    return result;
   }
 
   @Post()

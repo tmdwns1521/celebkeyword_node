@@ -3,9 +3,17 @@ import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
 import axios from 'axios';
 import { PlaceRankDto } from './dto/place-rank.dto';
+import { PlaceSingle } from './entities/place.single.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class PlaceService {
+  constructor(
+    @InjectRepository(PlaceSingle)
+    private placeSingleRepository: Repository<PlaceSingle>,
+  ) {}
   async getPlaceType(keyword: string): Promise<string> {
     const url = `https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=${keyword}`;
 
@@ -263,9 +271,21 @@ export class PlaceService {
         const placeInfo = response.find((item) => item.id === placeNumber);
         if (rank !== -1) {
           rank = page + rank;
-          totalReviewCount = placeInfo.totalReviewCount;
-          visitorReviewCount = placeInfo.visitorReviewCount;
-          return { rank, totalReviewCount, visitorReviewCount };
+          totalReviewCount = placeInfo.totalReviewCount
+            ? placeInfo.totalReviewCount
+            : 0;
+          visitorReviewCount = placeInfo.visitorReviewCount
+            ? placeInfo.visitorReviewCount
+            : 0;
+          const fullAddress = placeInfo.fullAddress;
+          const name = placeInfo.name;
+          return {
+            rank,
+            totalReviewCount,
+            visitorReviewCount,
+            fullAddress,
+            name,
+          };
         }
         page += 100;
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -292,6 +312,26 @@ export class PlaceService {
     } else if (type === 'restaurant') {
       return res.data[0].data.restaurants.items;
     }
+  }
+
+  async setSingleRank(
+    user: User,
+    placeRankDto: PlaceRankDto,
+    result: any,
+  ): Promise<PlaceSingle> {
+    const placeSingle = new PlaceSingle();
+    placeSingle.searchDate = new Date();
+    placeSingle.searchKeyword = placeRankDto.keyword;
+    placeSingle.companyCode = placeRankDto.placeNumber;
+    placeSingle.companyName = result.name;
+    placeSingle.address = result.fullAddress;
+    placeSingle.saveCount = 0;
+    placeSingle.reviewCount = result.totalReviewCount;
+    placeSingle.visitCount = result.visitorReviewCount;
+    placeSingle.rank = result.rank;
+    placeSingle.user = user;
+
+    return await this.placeSingleRepository.save(placeSingle);
   }
 
   create(createPlaceDto: CreatePlaceDto) {

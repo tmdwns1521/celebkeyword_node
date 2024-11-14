@@ -27,6 +27,6 @@ import { MailerModule } from '@nestjs-modules/mailer';
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService],
+  exports: [UserService, UserModule],
 })
 export class UserModule {}
