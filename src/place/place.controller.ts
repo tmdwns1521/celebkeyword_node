@@ -1,27 +1,15 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
 import { PlaceService } from './place.service';
-import { CreatePlaceDto } from './dto/create-place.dto';
-import { UpdatePlaceDto } from './dto/update-place.dto';
 import { PlaceRankDto } from './dto/place-rank.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { User } from "../user/entities/user.entity";
+import { User } from '../user/entities/user.entity';
 
 @Controller('places')
 export class PlaceController {
   constructor(private readonly placeService: PlaceService) {}
 
-  @Post('/place-rank/single')
+  @Post('/place-rank/singles')
   @UseGuards(JwtAuthGuard) // Apply the JwtAuthGuard to protect this route
   async getPlaceRanking(
     @Body() placeRankDto: PlaceRankDto,
@@ -29,32 +17,15 @@ export class PlaceController {
   ): Promise<any> {
     const user = req.user as User;
     const result = await this.placeService.getPlaceRanking(placeRankDto);
+    console.log('getPlaceRanking-result ::: ', result);
     await this.placeService.setSingleRank(user, placeRankDto, result);
     return result;
   }
 
-  @Post()
-  create(@Body() createPlaceDto: CreatePlaceDto) {
-    return this.placeService.create(createPlaceDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.placeService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.placeService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlaceDto: UpdatePlaceDto) {
-    return this.placeService.update(+id, updatePlaceDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.placeService.remove(+id);
+  @Get('/place-rank/singles')
+  @UseGuards(JwtAuthGuard)
+  async getPlaceSingleRankingByUser(@Req() req: Request) {
+    const user = req.user as User;
+    return await this.placeService.getPlaceSingleRankingByUser(user);
   }
 }

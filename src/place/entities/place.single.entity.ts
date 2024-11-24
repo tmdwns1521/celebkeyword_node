@@ -27,8 +27,8 @@ export class PlaceSingle {
   @Column()
   address: string;
 
-  @Column({ default: 0 })
-  saveCount: number;
+  @Column({ default: '0' })
+  saveCount: string;
 
   @Column({ default: 0 })
   reviewCount: number;
@@ -36,8 +36,14 @@ export class PlaceSingle {
   @Column({ default: 0 })
   visitCount: number;
 
+  @Column({ default: 0 })
+  totalCount: number;
+
   @Column()
   rank: number;
+
+  @Column()
+  memo: string;
 
   @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
