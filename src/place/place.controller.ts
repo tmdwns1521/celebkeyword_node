@@ -17,9 +17,21 @@ export class PlaceController {
   ): Promise<any> {
     const user = req.user as User;
     const result = await this.placeService.getPlaceRanking(placeRankDto);
+    if (typeof result !== 'number' && result?.rank === -1) {
+      return { ResponseMSG: '조회가 되지 않습니다.' };
+    }
     console.log('getPlaceRanking-result ::: ', result);
-    await this.placeService.setSingleRank(user, placeRankDto, result);
-    return result;
+    const summaryData = await this.placeService.getSummary(
+      placeRankDto.placeNumber,
+    );
+    console.log('summaryData', summaryData);
+    await this.placeService.setSingleRank(
+      user,
+      placeRankDto,
+      result,
+      summaryData,
+    );
+    return { ResponseMSG: '성공', result };
   }
 
   @Get('/place-rank/singles')

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { PlaceRankDto } from './dto/place-rank.dto';
 import { PlaceSingle } from './entities/place.single.entity';
 import { Repository } from 'typeorm';
@@ -241,13 +241,9 @@ export class PlaceService {
       while (true) {
         const data = await this.getPlaceData(type, keyword, page);
         const response = await this.getPaceData(url, data, type);
-        if (response && response.items.length <= 0) {
+        if (!response || !response?.items || response.items.length === 0) {
           break;
         }
-        if (response === null) {
-          return rank;
-        }
-        console.log(response.items);
         rank = response.items.findIndex((item) => item.id === placeNumber);
         const placeInfo = response.items.find(
           (item) => item.id === placeNumber,
@@ -291,6 +287,7 @@ export class PlaceService {
       'accept-encoding': 'gzip, deflate, br, zstd',
       'accept-language': 'ko',
       'content-type': 'application/json',
+      'Cache-Control': 'no-cache',
       cookie: 'NNB=P6BSSQLDVVZGM;',
       origin: 'https://m.place.naver.com',
       'sec-ch-ua':
@@ -324,9 +321,6 @@ export class PlaceService {
     };
 
     const res = await axios.post(url, data, config); // Use config as the third argument
-
-    console.log(res.data[0].data);
-
     if (
       type === 'hospital' ||
       type === 'nailshop' ||
@@ -341,10 +335,64 @@ export class PlaceService {
     }
   }
 
+  async getSummary(placeNumber: string) {
+    try {
+      const headers = {
+        'accept-encoding': 'gzip, deflate, br, zstd',
+        'accept-language': 'ko',
+        'content-type': 'application/json',
+        'Cache-Control': 'no-cache',
+        cookie:
+          'NAC=4kB3BMwcOY7U; NNB=4H4BTF4OCB2GM; NaverSuggestUse=use%26unuse; ASID=d368a89000000190c59aaf0b00000068; NFS=2; ba.uuid=74d54c39-17eb-4b4b-a9ea-be4643738a7c; _fwb=14cvQVqfVWSbmVWgtX5dke.1725071009548; tooltipDisplayed=true; _gcl_au=1.1.600373188.1729607105; _ga=GA1.1.1970570596.1729607105; _ga_3X9JZ731KT=GS1.1.1729607104.1.0.1729607104.0.0.0; NACT=1; MM_PF=SEARCH; page_uid=i0eYIdqVbVGssLatL9dssssstuK-163846; _naver_usersession_=0MLAtXp6p58G8T3x0PX0eg==; BUC=mrnRpUgygV4FAPmpNEUmE6Og5U6cbD__uPdu6HgPPOM=; wcs_bt=sp_96c3ae8a61cd70:1732538356|sp_6e28c6f6cd5a90:1732458521|sp_96b90b3aec5908:1732458027|sp_4725fc81973680:1732454671|sp_967bdd4e468928:1732454615|sp_967eaa421c25c0:1732279805|sp_97299101cd6510:1732196356|sp_96f6f04004a0b8:1731843495|sp_96c24cd7cd51d0:1731843493|sp_979e54e26f63a0:1731843489',
+        origin: 'https://m.place.naver.com',
+        'sec-ch-ua':
+          '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        referer:
+          'https://map.naver.com/p/search/%EA%B0%95%EB%8F%99%EA%B5%AC%EC%9D%B4%EC%82%AC/place/18633305?c=12.00,0,0,0,dh&placePath=%3Fentry%253Dpll',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+      };
+
+      const config: {
+        headers: {
+          'sec-fetch-mode': string;
+          'sec-ch-ua': string;
+          'sec-ch-ua-mobile': string;
+          'sec-fetch-site': string;
+          'accept-language': string;
+          cookie: string;
+          origin: string;
+          'sec-ch-ua-platform': string;
+          'content-type': string;
+          'accept-encoding': string;
+          'sec-fetch-dest': string;
+          'user-agent': string;
+        };
+      } = {
+        headers, // Pass headers inside the `config` object
+      };
+      const summaryData = await axios.get(
+        `https://map.naver.com/p/api/place/summary/${placeNumber}`,
+        config,
+      );
+      const { visitorReviewCount, blogReviewCount } = summaryData.data;
+      return { visitorReviewCount, blogReviewCount };
+    } catch (error) {
+      console.error('Error fetching place ranking:', error);
+      throw new Error('Failed to getSummary');
+    }
+  }
+
   async setSingleRank(
     user: User,
     placeRankDto: PlaceRankDto,
     result: any,
+    summaryData: { blogReviewCount: any; visitorReviewCount: any },
   ): Promise<PlaceSingle> {
     const placeSingle = new PlaceSingle();
     placeSingle.searchDate = new Date();
@@ -353,8 +401,8 @@ export class PlaceService {
     placeSingle.companyName = result.name;
     placeSingle.address = result.fullAddress;
     placeSingle.saveCount = result.saveCount;
-    placeSingle.reviewCount = Number(result.totalReviewCount);
-    placeSingle.visitCount = Number(result.visitorReviewCount);
+    placeSingle.reviewCount = Number(summaryData.blogReviewCount);
+    placeSingle.visitCount = Number(summaryData.visitorReviewCount);
     placeSingle.rank = result.rank;
     placeSingle.user = user;
     placeSingle.totalCount = result.totalCount;
