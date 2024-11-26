@@ -23,6 +23,24 @@ export class UserService {
     private readonly mailerService: MailerService,
   ) {}
 
+  async checkSinglePlace(user: User): Promise<boolean> {
+    const { singlePlaceDate } = user;
+
+    if (!singlePlaceDate) {
+      // singlePlaceDate가 null인 경우 현재 시간으로 설정
+      user.singlePlaceDate = new Date();
+      await this.userRepository.save(user); // DB 업데이트
+      return true;
+    }
+
+    const currentTime = new Date();
+    const differenceInSeconds =
+      (currentTime.getTime() - singlePlaceDate.getTime()) / 1000;
+
+    // 30초 이상 경과했으면 true, 아니면 false 반환
+    return differenceInSeconds > 30;
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     const { username, password, email, phoneNumber, id } = createUserDto;
 

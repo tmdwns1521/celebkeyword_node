@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from "@nestjs/common";
 import axios from 'axios';
 import { PlaceRankDto } from './dto/place-rank.dto';
 import { PlaceSingle } from './entities/place.single.entity';
@@ -11,6 +11,8 @@ export class PlaceService {
   constructor(
     @InjectRepository(PlaceSingle)
     private placeSingleRepository: Repository<PlaceSingle>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
   async getPlaceType(keyword: string): Promise<string> {
     const url = `https://m.search.naver.com/search.naver?sm=mtp_hty.top&where=m&query=${keyword}`;
@@ -410,14 +412,35 @@ export class PlaceService {
 
     console.log('placeSingle ::: ', placeSingle);
 
+    user.singlePlaceDate = new Date();
+    await this.userRepository.save(user);
+
     return await this.placeSingleRepository.save(placeSingle);
   }
 
-  async getPlaceSingleRankingByUser(user: User): Promise<PlaceSingle[]> {
-    return await this.placeSingleRepository.find({
+  async removePlaceRank(user: User, id: string): Promise<void> {
+    const placeToDelete = await this.placeSingleRepository.findOne({
+      where: { id: Number(id), user }, // id가 숫자인 경우 타입 변환
+    });
+
+    if (!placeToDelete) {
+      throw new NotFoundException('해당 데이터를 찾을 수 없습니다.');
+    }
+
+    await this.placeSingleRepository.remove(placeToDelete);
+  }
+
+  async getPlaceSingleRankingByUser(
+    user: User,
+  ): Promise<Omit<PlaceSingle, 'user'>[]> {
+    const data = await this.placeSingleRepository.find({
       where: { user: user }, // Filter by the user
       relations: ['user'], // Optionally include related user data if needed
       order: { id: 'DESC' }, // Sort by id in descending order
     });
+
+    // user 정보를 제외한 데이터를 반환
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return data.map(({ user, ...rest }) => rest);
   }
 }
