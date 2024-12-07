@@ -7,28 +7,33 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import * as dotenv from 'dotenv';
 import { User } from './user/entities/user.entity';
-import { PlaceSingle } from "./place/entities/place.single.entity";
-// 엔티티 임포트 (예시)
+import { PlaceSingle } from './place/entities/place.single.entity';
+import { TrandkeywordsModule } from './trandkeywords/trandkeywords.module';
+import { Trandkeyword } from './trandkeywords/entities/trandkeyword.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TrandkeywordsSchedulerService } from './trandkeywords/schedulers/trandkeywords-scheduler.service';
 
 dotenv.config();
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as 'mysql', // 데이터베이스 타입
-      host: process.env.DB_HOST, // 데이터베이스 호스트
-      port: +process.env.DB_PORT, // MySQL 포트
-      username: process.env.DB_USERNAME, // MySQL 사용자명
-      password: process.env.DB_PASSWORD, // MySQL 비밀번호
-      database: process.env.DB_NAME, // 데이터베이스 이름
-      entities: [User, PlaceSingle], // 엔티티 (모델) 목록
-      synchronize: true, // 자동으로 데이터베이스와 동기화 (개발 환경에서만 사용 권장)
+      type: process.env.DB_TYPE as 'mysql',
+      host: process.env.DB_HOST,
+      port: +process.env.DB_PORT,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      entities: [User, PlaceSingle, Trandkeyword],
+      synchronize: true,
     }),
+    ScheduleModule.forRoot(),
     PlaceModule,
     UserModule,
     AuthModule,
+    TrandkeywordsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TrandkeywordsSchedulerService], // 여기에 스케줄러 서비스 추가
 })
 export class AppModule {}
