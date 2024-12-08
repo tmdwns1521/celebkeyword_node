@@ -3,10 +3,11 @@ import {
   Controller,
   Delete,
   Get,
-  Post, Query,
+  Post,
+  Query,
   Req,
-  UseGuards
-} from "@nestjs/common";
+  UseGuards,
+} from '@nestjs/common';
 import { PlaceService } from './place.service';
 import { PlaceRankDto } from './dto/place-rank.dto';
 import { Request } from 'express';

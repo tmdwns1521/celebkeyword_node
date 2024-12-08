@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Query } from "@nestjs/common";
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -9,6 +9,7 @@ export class UserController {
 
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
+    console.log(createUserDto);
     return this.userService.create(createUserDto);
   }
 
@@ -23,11 +24,11 @@ export class UserController {
     return { isTaken };
   }
   @Get('verify-email')
-  async verifyEmail(@Param('token') token: string) {
+  async verifyEmail(@Query('token') token: string) {
     const user = await this.userService.verifyEmailToken(token);
     if (user) {
-      return { message: '이메일 인증이 완료되었습니다.' };
+      return { success: true, message: '이메일 인증이 완료되었습니다.' };
     }
-    return { message: '인증 실패: 유효하지 않은 토큰입니다.' };
+    return { success: false, message: '인증 실패: 유효하지 않은 토큰입니다.' };
   }
 }

@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Trandkeyword } from './entities/trandkeyword.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import * as cheerio from 'cheerio';
-import { TrandkeywordDTO } from "./dto/trandkeyword.dto";
-import { plainToInstance } from "class-transformer";
+import { TrandkeywordDTO } from './dto/trandkeyword.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class TrandkeywordsService {
@@ -15,7 +15,25 @@ export class TrandkeywordsService {
   ) {}
 
   async getTrandKeywordAll() {
-    const trandKeywords = await this.trandKeywordRepository.find();
+    const today = new Date();
+    const startOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    );
+    const endOfDay = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1,
+    );
+
+    // 오늘 날짜에 포함된 데이터만 조회
+    const trandKeywords = await this.trandKeywordRepository.find({
+      where: {
+        createdAt: Between(startOfDay, endOfDay), // createdAt 필드 기준
+      },
+    });
+
     return plainToInstance(TrandkeywordDTO, trandKeywords, {
       excludeExtraneousValues: true,
     });
@@ -65,7 +83,7 @@ export class TrandkeywordsService {
         // 정규식을 이용하여 숫자(순위)와 텍스트(키워드) 분리
         const match = text.match(/^(\d+)(.*)$/);
         if (match) {
-          const rank = parseInt(match[1], 10); // 순위 추출
+          const rank = index + 1;
           const keyword = match[2].trim(); // 나머지 키워드 추출
 
           if (keyword) {

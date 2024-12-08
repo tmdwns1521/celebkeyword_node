@@ -12,6 +12,7 @@ import { TrandkeywordsModule } from './trandkeywords/trandkeywords.module';
 import { Trandkeyword } from './trandkeywords/entities/trandkeyword.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TrandkeywordsSchedulerService } from './trandkeywords/schedulers/trandkeywords-scheduler.service';
+import { BlogModule } from './blog/blog.module';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ dotenv.config();
     UserModule,
     AuthModule,
     TrandkeywordsModule,
+    BlogModule,
   ],
   controllers: [AppController],
   providers: [AppService, TrandkeywordsSchedulerService], // 여기에 스케줄러 서비스 추가

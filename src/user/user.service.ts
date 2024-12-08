@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -41,22 +36,28 @@ export class UserService {
     return differenceInSeconds > 30;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<{ success: boolean; message: string; user?: User }> {
     const { username, password, email, phoneNumber, id } = createUserDto;
 
-    // 이미 존재하는 유저 아이디 또는 이메일 확인
+    // 이미 존재하는 유저 아이디 확인
     if (await this.isUserIdTaken(id)) {
-      throw new UnauthorizedException('이미 사용 중인 아이디입니다.');
+      return { success: false, message: '이미 사용 중인 아이디입니다.' };
     }
+
+    // 이미 존재하는 이메일 확인
     if (await this.isEmailTaken(email)) {
-      throw new UnauthorizedException('이미 사용 중인 이메일입니다.');
+      return { success: false, message: '이미 사용 중인 이메일입니다.' };
     }
 
     // 비밀번호 복잡도 검사
     if (!this.isPasswordStrong(password)) {
-      throw new BadRequestException(
-        '비밀번호는 최소 8자 이상이어야 하며, 특수 문자를 포함해야 합니다.',
-      );
+      return {
+        success: false,
+        message:
+          '비밀번호는 최소 8자 이상이어야 하며, 특수 문자를 포함해야 합니다.',
+      };
     }
 
     // 이메일 인증 토큰 생성
@@ -79,7 +80,6 @@ export class UserService {
 
     // 인증 이메일 전송
     const verificationUrl = `${process.env.APP_URL}/auth/verify-email?token=${emailVerificationToken}`;
-    console.log(verificationUrl);
     try {
       await this.mailerService.sendMail({
         to: email,
@@ -88,26 +88,33 @@ export class UserService {
       });
     } catch (error) {
       console.log(error);
-      throw new BadRequestException('인증 이메일 전송에 실패했습니다.');
+      return { success: false, message: '인증 이메일 전송에 실패했습니다.' };
     }
 
-    return user;
+    return { success: true, message: '회원가입에 성공했습니다.', user };
   }
 
-  async verifyEmailToken(token: string): Promise<User | null> {
+  async verifyEmailToken(token: string): Promise<any> {
+    console.log(token);
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
     });
+    console.log(user);
     if (!user) {
       throw new NotFoundException('유효하지 않은 토큰입니다.'); // 유효하지 않은 토큰
     }
 
+    console.log('혁명');
+
     // 유저 이메일 인증 완료 및 토큰 삭제
     user.isEmailVerified = true;
     user.emailVerificationToken = null;
+    console.log(user);
     await this.userRepository.save(user);
 
-    return user;
+    console.log('개혁');
+
+    return { success: true, message: '이메일 인증에 성공했습니다.' };
   }
 
   public async isUserIdTaken(id: string): Promise<boolean> {
@@ -133,13 +140,19 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: { userId: userId },
     });
+
     if (!user) {
-      throw new UnauthorizedException('유저 없음');
+      return { success: false, message: '유저가 존재하지 않습니다.' };
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('비밀번호 틀림');
+      return { success: false, message: '비밀번호가 틀렸습니다.' };
+    }
+
+    // 이메일 인증 여부 확인
+    if (!user.isEmailVerified) {
+      return { success: false, message: '이메일 인증이 필요합니다.' };
     }
 
     const payload = {
@@ -147,10 +160,12 @@ export class UserService {
       userName: user.username,
       sub: user.id,
     }; // JWT Payload 설정
+
     return {
       token: this.jwtService.sign(payload),
       userId: user.userId,
       userName: user.username,
+      success: true,
     };
   }
 

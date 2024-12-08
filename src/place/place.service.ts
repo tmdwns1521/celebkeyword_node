@@ -433,11 +433,12 @@ export class PlaceService {
   async getPlaceSingleRankingByUser(
     user: User,
   ): Promise<Omit<PlaceSingle, 'user'>[]> {
-    const data = await this.placeSingleRepository.find({
-      where: { user: user }, // Filter by the user
-      relations: ['user'], // Optionally include related user data if needed
-      order: { id: 'DESC' }, // Sort by id in descending order
-    });
+    const data = await this.placeSingleRepository
+      .createQueryBuilder('placeSingle')
+      .leftJoinAndSelect('placeSingle.user', 'user') // 사용자와의 관계를 조인
+      .where('user.id = :userId', { userId: user.id }) // user.id를 조건으로 필터링
+      .orderBy('placeSingle.id', 'DESC') // id 기준 내림차순 정렬
+      .getMany();
 
     // user 정보를 제외한 데이터를 반환
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
